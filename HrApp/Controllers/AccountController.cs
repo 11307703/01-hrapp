@@ -1,4 +1,5 @@
-﻿using HrApp.ViewModels;
+﻿using HrApp.Services.Interfaces;
+using HrApp.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,13 +7,12 @@ namespace HrApp.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly SignInManager<IdentityUser> _signInManager;
 
-        public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
+        private readonly IIdentityService _service;
+
+        public AccountController(IIdentityService service)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
+          _service = service;
         }
 
         #region Login
@@ -31,6 +31,23 @@ namespace HrApp.Controllers
         }
 
         //TODO
+        [HttpPost]
+        public async Task<IActionResult> LoginUserName(LoginUserNameViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _service.LoginAsync("", model.UserName, model.Password);
+                if (!result.Succeeded)
+                {
+                    ModelState.AddModelError("", result.ErrorString);
+                }
+                else
+                {
+                    return RedirectToAction("Index", "Home");
+                }
+            }
+            return View(model);
+        }
 
         #endregion
 
@@ -43,7 +60,23 @@ namespace HrApp.Controllers
         }
 
         //TODO
-
+        [HttpPost]
+        public async Task<IActionResult> LoginEmail(LoginEmailViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _service.LoginAsync("", model.Email, model.Password);
+                if (!result.Succeeded)
+                {
+                    ModelState.AddModelError("", result.ErrorString);
+                }
+                else
+                {
+                    return RedirectToAction("Index","Home");
+                }
+            }
+            return View(model);
+        }
         #endregion
 
         #region Register
@@ -59,22 +92,14 @@ namespace HrApp.Controllers
         {
             if (ModelState.IsValid)
             {
-                var identityUser = new IdentityUser
+                var result = await _service.RegisterAsync(registerModel);
+                if (!result.Succeeded)
                 {
-                    Email = registerModel.Email,
-                    UserName = registerModel.UserName
-                };
-                var result = await _userManager.CreateAsync(identityUser, registerModel.Password);
-                if (result.Succeeded)
-                {
-                    return RedirectToAction("Login", "Account");
+                    ModelState.AddModelError("", result.ErrorString);
                 }
                 else
                 {
-                    foreach(var error in result.Errors)
-                    {
-                        ModelState.AddModelError(error.Code, error.Description);
-                    }
+                    return View("Login");
                 }
             }
             return View();
@@ -86,7 +111,7 @@ namespace HrApp.Controllers
 
         public async Task<IActionResult> LogoutAsync()
         {
-            await _signInManager.SignOutAsync();
+            await _service.SignOutAsync();
             return RedirectToAction("Login", "Account");
         }
 
