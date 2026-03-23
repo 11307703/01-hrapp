@@ -13,7 +13,7 @@ namespace HrApp.Services.Repositories
         {
             _context = context;
         }
-        public  Task Add(Employee employee)
+        public Task Add(Employee employee)
         {
             if (employee != null)
             {
@@ -25,7 +25,12 @@ namespace HrApp.Services.Repositories
 
         public Task Delete(Employee employee)
         {
-            throw new NotImplementedException();
+            if (employee != null)
+            {
+                _context.Employees.Remove(employee);
+                _context.SaveChanges();
+            }
+            return Task.CompletedTask;
         }
 
         public async Task<IEnumerable<Employee>> GetAll()
@@ -34,14 +39,20 @@ namespace HrApp.Services.Repositories
             return employees;
         }
 
-        public Task<Employee?> GetById(int? id)
+        public async Task<Employee?> GetById(int? id)
         {
-            throw new NotImplementedException();
+            var employee = await _context.Employees.FirstOrDefaultAsync(x => x.EmployeeId == id);
+            return employee;
         }
 
-        public Task Update(Employee employee)
+        public  Task Update(Employee employee)
         {
-            throw new NotImplementedException();
+            if (employee != null)
+            {
+                _context.Employees.Update(employee);
+                 _context.SaveChangesAsync();
+            }
+            return Task.CompletedTask;
         }
     }
 }
