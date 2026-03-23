@@ -17,6 +17,27 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>();
 
 builder.Services.AddControllersWithViews();
+
+builder.Services
+        .AddAuthentication(options =>
+        {
+            options.DefaultScheme = "Cookies";
+            options.DefaultChallengeScheme = "oidc";
+        })
+        .AddCookie("Cookies")
+        .AddOpenIdConnect("oidc", options =>
+        {
+            options.Authority = "https://localhost:5001"; // IdentityServer URL
+            options.ClientId = "mvc_client";
+            options.ClientSecret = "secret";
+            options.ResponseType = "code";
+            options.SaveTokens = true;
+            options.Scope.Add("profile");
+            options.Scope.Add("email");
+        });
+
+
+
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 builder.Services.AddScoped<IEmployeeRepository,EmployeeRepository>();
 var app = builder.Build();
